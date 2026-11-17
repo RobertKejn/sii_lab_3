@@ -2,6 +2,8 @@ package org.example;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -21,16 +23,16 @@ public class Main {
         return data;
     }
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public static void main1(String[] args) throws IOException, ClassNotFoundException {
         double[][] data = CsvDataHelper.readCsv("aapl_raw_data.csv", new HashSet<>(List.of(0)));
 
         int targetColumn = 4;
-        int window = 20;
-        int clusters = 200;
-        int hidden = 120;
+        int window = 5;
+        int clusters = 100;
+        int hidden = 60;
         int outputs = 1;
         double testSize = 0.2;
-        int epoch = 50;
+        int epoch = 60;
         BigDecimal threshold = new BigDecimal("0.000001");
 
         Object[] split = CsvDataHelper.splitData(data, window, targetColumn, testSize);
@@ -44,7 +46,7 @@ public class Main {
 
         String networkPath = String.format("bad_network_w%d_c%d_e%d_h%d_t%d", window, clusters, epoch, hidden, threshold.scale()+1); //"bad_network_w20_c200_e50_t6";
         NeuralNetwork network;
-        boolean saveNetwork = true;
+        boolean saveNetwork = !Files.isRegularFile(Path.of(networkPath));
         if (saveNetwork) {
             FuzzyLayer fuzzyLayer = new FuzzyLayer(clusters, trainInput[0].length);
             fuzzyLayer.loadData(trainInput);
@@ -74,17 +76,19 @@ public class Main {
             results[i][0] = pred;
             System.out.println(Arrays.toString(testInput[i]) + "  -> " + pred + " |  ref: " + reference + " diff: " + (reference - pred));
         }
+
+        ErrorChartPanel.show(network.getLearningLog());
         PlotPanel.show(testOutput, results);
 
     }
-    public static void main1(String[] args) throws IOException, ClassNotFoundException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
         int window = 2;
-        int clusters = 60;
+        int clusters = 50;
         int hidden = 100;
         int outputs = 1;
         int samples = 2000;
-        double testSize = 1;
-        int epoch = 30;
+        double testSize = 0.2;
+        int epoch = 50;
         BigDecimal threshold = new BigDecimal("0.000001");
 
         double[] dataRaw = generateSeries(samples);
@@ -98,7 +102,7 @@ public class Main {
 
         String networkPath = String.format("sin_w%d_c%d_e%d_h%d_t%d", window, clusters, epoch, hidden, threshold.scale()+1);
         NeuralNetwork network;
-        boolean saveNetwork = false;
+        boolean saveNetwork = !Files.isRegularFile(Path.of(networkPath));
         if (saveNetwork) {
             FuzzyLayer fuzzyLayer = new FuzzyLayer(clusters, trainInput[0].length);
             fuzzyLayer.loadData(trainInput);
@@ -127,6 +131,7 @@ public class Main {
             results[i][0] = pred;
             System.out.println(Arrays.toString(testInput[i]) + "  -> " + pred + " |  ref: " + reference + " diff: " + (reference - pred));
         }
+        ErrorChartPanel.show(network.getLearningLog());
         PlotPanel.show(testOutput, results);
     }
 
@@ -144,5 +149,7 @@ public class Main {
         return neuralNetwork;
     }
 }
+
+
 
 

@@ -6,6 +6,8 @@ public class NeuralNetwork implements Serializable {
     private final FuzzyLayer fuzzyLayer;
     private final PerceptronLayer[] layers;
 
+    private double[][] learningLog;
+
     private final int[] layerSizes;
 
     public NeuralNetwork(int[] layerSizes, FuzzyLayer fuzzyLayer) {
@@ -153,15 +155,8 @@ public class NeuralNetwork implements Serializable {
         }
     }
 
-    private double calculateErrorAtStep(
-            double alpha,
-            double[] baseParameters,
-            double[] gradients,
-            double[][] input,
-            double[][] expected) {
-
+    private double calculateErrorAtStep(double alpha, double[] baseParameters, double[] gradients, double[][] input, double[][] expected) {
         double[] trial = new double[baseParameters.length];
-
         for (int i = 0; i < trial.length; i++) {
             trial[i] = baseParameters[i] - alpha * gradients[i];
         }
@@ -170,7 +165,6 @@ public class NeuralNetwork implements Serializable {
 
         double error = calculateError(input, expected);
 
-        // Возвращаем исходные параметры
         setParameters(baseParameters);
 
         return error;
@@ -194,7 +188,6 @@ public class NeuralNetwork implements Serializable {
             previousError = nextError;
         }
 
-        // Метод золотого сечения
         double phi = (Math.sqrt(5.0) - 1.0) / 2.0;
 
         double x1 = right - phi * (right - left);
@@ -222,6 +215,7 @@ public class NeuralNetwork implements Serializable {
     }
 
     public void fit(double[][] input, double[][] expected, int epochs, int logFrequency) {
+        learningLog = new double[epochs][2];
         for (int epoch = 0; epoch < epochs; epoch++) {
             calculateGradients(input, expected);
 
@@ -245,9 +239,15 @@ public class NeuralNetwork implements Serializable {
             setParameters(newParameters);
 
             double error = calculateError(input, expected);
+            learningLog[epoch][0] = epoch;
+            learningLog[epoch][1] = error;
             if (epoch % logFrequency == 0) {
                 System.out.println("Epoch: " + epoch + ", Error MSE: " + error + ", Step: " + step);
             }
         }
+    }
+
+    public double[][] getLearningLog(){
+        return learningLog;
     }
 }
